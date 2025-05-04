@@ -17,18 +17,21 @@ typedef struct NO {
     struct NO *dir;
 } NO;
 
-// retorna a altura de um nó ou -1 se for nulo
+// Declaração antecipada da função buscarPorId
+NO* buscarPorId(NO *raiz, int id);
+
+// Função para calcular a altura de um nó
 int altura_NO(NO *no) {
     if (no == NULL) return -1;
     return no->altura;
 }
 
-// retorna o maior valor entre dois inteiros
+// Função que retorna o maior valor entre dois números
 int maior(int a, int b) {
     return (a > b) ? a : b;
 }
 
-// cria um novo nó com os dados do usuário
+// Função para criar um novo nó e inicializá-lo
 NO* novoNO(Usuario u) {
     NO* no = (NO*)malloc(sizeof(NO));
     no->usuario = u;
@@ -38,7 +41,7 @@ NO* novoNO(Usuario u) {
     return no;
 }
 
-// realiza uma rotação simples à esquerda (caso direita-direita)
+// Rotação à direita (caso de desequilíbrio do tipo "esquerda-esquerda")
 NO* rotacaoRR(NO *raiz) {
     NO *no = raiz->dir;
     raiz->dir = no->esq;
@@ -48,7 +51,7 @@ NO* rotacaoRR(NO *raiz) {
     return no;
 }
 
-// realiza uma rotação simples à direita (caso esquerda-esquerda)
+// Rotação à esquerda (caso de desequilíbrio do tipo "direita-direita")
 NO* rotacaoLL(NO *raiz) {
     NO *no = raiz->esq;
     raiz->esq = no->dir;
@@ -58,27 +61,33 @@ NO* rotacaoLL(NO *raiz) {
     return no;
 }
 
-// realiza rotação esquerda-direita (caso esquerda-direita)
+// Rotação esquerda-direita (caso de desequilíbrio do tipo "esquerda-direita")
 NO* rotacaoLR(NO *raiz) {
     raiz->esq = rotacaoRR(raiz->esq);
     return rotacaoLL(raiz);
 }
 
-// realiza rotação direita-esquerda (caso direita-esquerda)
+// Rotação direita-esquerda (caso de desequilíbrio do tipo "direita-esquerda")
 NO* rotacaoRL(NO *raiz) {
     raiz->dir = rotacaoLL(raiz->dir);
     return rotacaoRR(raiz);
 }
 
-// calcula o fator de balanceamento de um nó
+// Função para calcular o fator de balanceamento de um nó
 int fatorBalanceamento(NO *no) {
     if (no == NULL) return 0;
     return altura_NO(no->esq) - altura_NO(no->dir);
 }
 
-// insere um usuário na árvore AVL
+// Função para inserir um usuário na árvore AVL
 NO* inserir(NO *raiz, Usuario u) {
     if (raiz == NULL) return novoNO(u);
+
+    // Verifica se o ID já existe
+    if (buscarPorId(raiz, u.id) != NULL) {
+        printf("\nID ja cadastrado!\n");
+        return raiz;  // Não insere o usuário se o ID já existir
+    }
 
     int cmp = strcmp(u.nome, raiz->usuario.nome);
     if (cmp < 0)
@@ -86,8 +95,8 @@ NO* inserir(NO *raiz, Usuario u) {
     else if (cmp > 0)
         raiz->dir = inserir(raiz->dir, u);
     else {
-        printf("\nusuario com esse nome ja existe!\n");
-        return raiz;
+        printf("\nNome ja cadastrado!\n");
+        return raiz;  // Não insere o usuário se o nome já existir
     }
 
     raiz->altura = maior(altura_NO(raiz->esq), altura_NO(raiz->dir)) + 1;
@@ -101,7 +110,15 @@ NO* inserir(NO *raiz, Usuario u) {
     return raiz;
 }
 
-// encontra o menor nó (usado na remoção)
+// Função para buscar um usuário pelo ID
+NO* buscarPorId(NO *raiz, int id) {
+    if (raiz == NULL) return NULL;
+    if (id == raiz->usuario.id) return raiz;
+    if (id < raiz->usuario.id) return buscarPorId(raiz->esq, id);
+    return buscarPorId(raiz->dir, id);
+}
+
+// Função para encontrar o nó com o menor valor
 NO* menorValor(NO* no) {
     NO* atual = no;
     while (atual->esq != NULL)
@@ -109,7 +126,7 @@ NO* menorValor(NO* no) {
     return atual;
 }
 
-// remove um usuário da árvore AVL pelo nome
+// Função para remover um usuário da árvore AVL
 NO* remover(NO *raiz, char nome[]) {
     if (raiz == NULL) return raiz;
 
@@ -148,7 +165,7 @@ NO* remover(NO *raiz, char nome[]) {
     return raiz;
 }
 
-// busca um usuário pelo nome na árvore
+// Função para buscar um usuário pelo nome
 NO* buscar(NO *raiz, char nome[]) {
     if (raiz == NULL) return NULL;
 
@@ -158,7 +175,7 @@ NO* buscar(NO *raiz, char nome[]) {
     return buscar(raiz->dir, nome);
 }
 
-// imprime a árvore em ordem alfabética
+// Função para imprimir os usuários em ordem (ordem crescente pelo nome)
 void imprimirEmOrdem(NO *raiz) {
     if (raiz != NULL) {
         imprimirEmOrdem(raiz->esq);
@@ -167,12 +184,20 @@ void imprimirEmOrdem(NO *raiz) {
     }
 }
 
-// função principal com menu de opções
+// Função para liberar a memória de todos os nós da árvore
+void liberarArvore(NO *raiz) {
+    if (raiz != NULL) {
+        liberarArvore(raiz->esq);
+        liberarArvore(raiz->dir);
+        free(raiz);
+    }
+}
+
 int main() {
     NO *raiz = NULL;
     int opcao;
     do {
-        printf("\nEscolha a opção desejada!!?\n");
+        printf("\nEscolha a opção desejada!!\n");
         printf("1 - Cadastrar usuario\n2 - Remover usuario\n3 - Listar usuarios\n4 - Buscar usuario\n0 - Sair\n> ");
         scanf("%d", &opcao);
         getchar();
@@ -185,23 +210,24 @@ int main() {
             raiz = inserir(raiz, u);
         } else if (opcao == 2) {
             char nome[100];
-            printf("Digite o nome do usuario a remover: ");
+            printf("Digite o NOME do usuario a remover: ");
             fgets(nome, 100, stdin); nome[strcspn(nome, "\n")] = 0;
             raiz = remover(raiz, nome);
         } else if (opcao == 3) {
             imprimirEmOrdem(raiz);
         } else if (opcao == 4) {
             char nome[100];
-            printf("Digite o nome do usuario a buscar: ");
+            printf("Digite o NOME do usuario a buscar: ");
             fgets(nome, 100, stdin); nome[strcspn(nome, "\n")] = 0;
             NO* encontrado = buscar(raiz, nome);
             if (encontrado)
-                printf("Usuario encontrado: %s | id: %d | email: %s\n", encontrado->usuario.nome, encontrado->usuario.id, encontrado->usuario.email);
+                printf("Usuario encontrado: nome: %s | id: %d | email: %s\n", encontrado->usuario.nome, encontrado->usuario.id, encontrado->usuario.email);
             else
                 printf("Usuario nao encontrado\n");
         }
 
     } while (opcao != 0);
 
+    liberarArvore(raiz);
     return 0;
 }
