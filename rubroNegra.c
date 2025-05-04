@@ -149,10 +149,7 @@ Node* inserir(Node* raiz, int cod, char* nome, int qtd, float preco) {
 }
 
 void emOrdem(Node* raiz) {
-    if (raiz == NULL_LEAF) {
-        printf("A árvore está vazia!\n");
-        return;
-    }
+    if (raiz == NULL_LEAF) return;
 
     emOrdem(raiz->esq);
 
@@ -313,7 +310,6 @@ Node* remover(Node* raiz, int codigo) {
         }
 
         free(raiz);
-        printf("Produto removido com sucesso (caso especial raiz)!\n");
         return novo_raiz;
     }
 
@@ -413,8 +409,12 @@ int main() {
             }
 
             case 4:
-                printf("=== LISTA DE PRODUTOS (in-order) ===\n");
-                emOrdem(raiz);
+                if (raiz == NULL_LEAF) {
+                    printf("A árvore está vazia!\n");
+                } else {
+                    printf("=== LISTA DE PRODUTOS (in-order) ===\n");
+                    emOrdem(raiz);
+                }
                 break;
 
             case 0:
