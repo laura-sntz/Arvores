@@ -71,6 +71,7 @@ Node* rotacaoDireita(Node* raiz, Node* y) {
     return raiz;
 }
 
+// Código feito por Laura Santos Oliveira
 Node* inserirBST(Node* raiz, Node* novo) {
     if (raiz == NULL_LEAF) return novo;
     if (novo->prod.codigo < raiz->prod.codigo) {
