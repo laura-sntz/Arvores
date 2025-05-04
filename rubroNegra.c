@@ -149,7 +149,10 @@ Node* inserir(Node* raiz, int cod, char* nome, int qtd, float preco) {
 }
 
 void emOrdem(Node* raiz) {
-    if (raiz == NULL_LEAF) return;
+    if (raiz == NULL_LEAF) {
+        printf("A árvore está vazia!\n");
+        return;
+    }
 
     emOrdem(raiz->esq);
 
@@ -278,6 +281,43 @@ Node* remover(Node* raiz, int codigo) {
         return raiz;
     }
 
+    // Verifica se é o caso especial (3 nós no total e removendo a raiz)
+    int nos_esq = (raiz->esq != NULL_LEAF);
+    int nos_dir = (raiz->dir != NULL_LEAF);
+    int total_nos = 1 + nos_esq + nos_dir;
+
+    if (total_nos == 3 && z == raiz) {
+        Node* novo_raiz;
+        Node* outro_no;
+        
+        // Determina qual nó será a nova raiz (o menor entre os dois restantes)
+        if (raiz->esq != NULL_LEAF && raiz->dir != NULL_LEAF) {
+            // Escolhe o menor entre esq e dir para ser a nova raiz
+            novo_raiz = (raiz->esq->prod.codigo < raiz->dir->prod.codigo) ? raiz->esq : raiz->dir;
+            outro_no = (novo_raiz == raiz->esq) ? raiz->dir : raiz->esq;
+        } else {
+            novo_raiz = (raiz->esq != NULL_LEAF) ? raiz->esq : raiz->dir;
+            outro_no = NULL_LEAF;
+        }
+
+        // Configura a nova raiz
+        novo_raiz->pai = NULL_LEAF;
+        novo_raiz->cor = BLACK;
+        
+        // Configura o outro nó como filho direito (se existir)
+        if (outro_no != NULL_LEAF) {
+            novo_raiz->dir = outro_no;
+            outro_no->pai = novo_raiz;
+            outro_no->cor = RED;
+            novo_raiz->esq = NULL_LEAF;
+        }
+
+        free(raiz);
+        printf("Produto removido com sucesso (caso especial raiz)!\n");
+        return novo_raiz;
+    }
+
+    // Restante da função original para casos normais
     Node* y = z;
     Node* x;
     Color corOriginal = y->cor;
