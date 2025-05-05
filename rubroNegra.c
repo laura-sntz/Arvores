@@ -37,13 +37,13 @@ Node* criarNoProduto(int codigo, char* nome, int qtd, float preco) {
     strcpy(novo->prod.nome, nome);
     novo->prod.quantidade = qtd;
     novo->prod.preco = preco;
-    novo->cor = RED;
+    novo->cor = RED;  // Novo nó sempre começa como RED (propriedade da Red-Black Tree)
     novo->esq = novo->dir = NULL_LEAF;
     novo->pai = NULL_LEAF;
     return novo;
 }
 
-// Rotação para a esquerda
+// Rotação para a esquerda - crucial para manter o balanceamento da árvore
 Node* rotacaoEsquerda(Node* raiz, Node* x) {
     Node* y = x->dir;
     x->dir = y->esq;
@@ -57,7 +57,7 @@ Node* rotacaoEsquerda(Node* raiz, Node* x) {
     return raiz;
 }
 
-// Rotação para a direita
+// Rotação para a direita - crucial para manter o balanceamento da árvore
 Node* rotacaoDireita(Node* raiz, Node* y) {
     Node* x = y->esq;
     y->esq = x->dir;
@@ -71,7 +71,7 @@ Node* rotacaoDireita(Node* raiz, Node* y) {
     return raiz;
 }
 
-// Código feito por Laura Santos Oliveira
+// Inserção BST padrão - mantém a propriedade de busca binária
 Node* inserirBST(Node* raiz, Node* novo) {
     if (raiz == NULL_LEAF) return novo;
     if (novo->prod.codigo < raiz->prod.codigo) {
@@ -84,26 +84,31 @@ Node* inserirBST(Node* raiz, Node* novo) {
     return raiz;
 }
 
+// Função mais complexa - corrige as violações das propriedades da Red-Black Tree após inserção
 Node* corrigirInsercao(Node* raiz, Node* no) {
     Node* tio;
     while (no != raiz && no->pai->cor == RED) {
         if (no->pai == no->pai->pai->esq) {
             tio = no->pai->pai->dir;
             if (tio->cor == RED) {
+                // Caso 1: tio vermelho - recolorir
                 no->pai->cor = BLACK;
                 tio->cor = BLACK;
                 no->pai->pai->cor = RED;
                 no = no->pai->pai;
             } else {
                 if (no == no->pai->dir) {
+                    // Caso 2: tio preto e nó é filho direito - transformar em caso 3
                     no = no->pai;
                     raiz = rotacaoEsquerda(raiz, no);
                 }
+                // Caso 3: tio preto e nó é filho esquerdo - recolorir e rotacionar
                 no->pai->cor = BLACK;
                 no->pai->pai->cor = RED;
                 raiz = rotacaoDireita(raiz, no->pai->pai);
             }
         } else {
+            // Casos espelhados para quando o pai é filho direito
             tio = no->pai->pai->esq;
             if (tio->cor == RED) {
                 no->pai->cor = BLACK;
@@ -121,7 +126,7 @@ Node* corrigirInsercao(Node* raiz, Node* no) {
             }
         }
     }
-    raiz->cor = BLACK;
+    raiz->cor = BLACK;  // Garante que a raiz sempre seja preta
     return raiz;
 }
 
@@ -170,6 +175,7 @@ void emOrdem(Node* raiz) {
     emOrdem(raiz->dir);
 }
 
+// Função auxiliar para substituir uma subárvore por outra
 void transplantar(Node** raiz, Node* u, Node* v) {
     if (u->pai == NULL_LEAF)
         *raiz = v;
@@ -181,12 +187,14 @@ void transplantar(Node** raiz, Node* u, Node* v) {
     v->pai = u->pai;
 }
 
+// Encontra o nó com menor valor na subárvore
 Node* minimo(Node* no) {
     while (no->esq != NULL_LEAF)
         no = no->esq;
     return no;
 }
 
+// Verifica as propriedades da Red-Black Tree - útil para debug
 void verificarArvore(Node* raiz) {
     if (raiz == NULL_LEAF) return;
     
@@ -209,11 +217,13 @@ void verificarArvore(Node* raiz) {
     verificarArvore(raiz->dir);
 }
 
+// Função mais complexa - corrige as violações das propriedades da Red-Black Tree após remoção
 Node* corrigirRemocao(Node* raiz, Node* x) {
     while (x != raiz && x->cor == BLACK) {
         if (x == x->pai->esq) {
             Node* w = x->pai->dir;
             if (w->cor == RED) {
+                // Caso 1: irmão w é vermelho - transformar em caso 2, 3 ou 4
                 w->cor = BLACK;
                 x->pai->cor = RED;
                 raiz = rotacaoEsquerda(raiz, x->pai);
@@ -221,15 +231,18 @@ Node* corrigirRemocao(Node* raiz, Node* x) {
             }
 
             if (w->esq->cor == BLACK && w->dir->cor == BLACK) {
+                // Caso 2: irmão w é preto e ambos os filhos são pretos
                 w->cor = RED;
                 x = x->pai;
             } else {
                 if (w->dir->cor == BLACK) {
+                    // Caso 3: irmão w é preto, filho esquerdo é vermelho, direito é preto
                     w->esq->cor = BLACK;
                     w->cor = RED;
                     raiz = rotacaoDireita(raiz, w);
                     w = x->pai->dir;
                 }
+                // Caso 4: irmão w é preto, filho direito é vermelho
                 w->cor = x->pai->cor;
                 x->pai->cor = BLACK;
                 w->dir->cor = BLACK;
@@ -237,6 +250,7 @@ Node* corrigirRemocao(Node* raiz, Node* x) {
                 x = raiz;
             }
         } else {
+            // Casos espelhados para quando x é filho direito
             Node* w = x->pai->esq;
             if (w->cor == RED) {
                 w->cor = BLACK;
@@ -285,12 +299,11 @@ Node* remover(Node* raiz, int codigo) {
     int total_nos = 1 + nos_esq + nos_dir;
 
     if (total_nos == 3 && z == raiz) {
+        // Tratamento especial para manter a árvore balanceada neste caso específico
         Node* novo_raiz;
         Node* outro_no;
         
-        // Determina qual nó será a nova raiz (o menor entre os dois restantes)
         if (raiz->esq != NULL_LEAF && raiz->dir != NULL_LEAF) {
-            // Escolhe o menor entre esq e dir para ser a nova raiz
             novo_raiz = (raiz->esq->prod.codigo < raiz->dir->prod.codigo) ? raiz->esq : raiz->dir;
             outro_no = (novo_raiz == raiz->esq) ? raiz->dir : raiz->esq;
         } else {
@@ -298,11 +311,9 @@ Node* remover(Node* raiz, int codigo) {
             outro_no = NULL_LEAF;
         }
 
-        // Configura a nova raiz
         novo_raiz->pai = NULL_LEAF;
         novo_raiz->cor = BLACK;
         
-        // Configura o outro nó como filho direito (se existir)
         if (outro_no != NULL_LEAF) {
             novo_raiz->dir = outro_no;
             outro_no->pai = novo_raiz;
@@ -314,7 +325,7 @@ Node* remover(Node* raiz, int codigo) {
         return novo_raiz;
     }
 
-    // Restante da função original para casos normais
+    // Algoritmo padrão de remoção em Red-Black Tree
     Node* y = z;
     Node* x;
     Color corOriginal = y->cor;
